@@ -22,14 +22,15 @@ var amount_flags: number = 0;
 //
 
 /**
- * Clears the field in the html document and overwrites `tiles` with an empty array and resets most of the global
- * variables (NOT: `click_mode`).
+ * Clears the field in the html document and overwrites `tiles` with an empty array, resets most of the global
+ * variables (NOT: `click_mode` and `amount_mines`) and calls `_init_flags`.
  */
-function _clear_field() {
+function _clear_field(): void {
     tiles = [];
-    amount_mines = 0;
     first_click_happened = false;
     amount_flags = 0;
+
+    _init_flags();
 
     let field = document.getElementById("field"); // HTMLDivElement
     if (field === null) {
@@ -265,7 +266,7 @@ function _create_tiles(width: number, height: number) {
  * Sets the mines at pseudo random positions on the field. Certain tiles can be assigned to be left untouched.
  * @param exclude The tiles that are not supposed to become mines.
  */
-function _set_mines(exclude: HTMLButtonElement[]) {
+function _set_mines(exclude: HTMLButtonElement[]): void {
     let exclude_length: number = exclude.length;
     let mines: HTMLButtonElement[] = exclude;
 
@@ -294,13 +295,19 @@ function _set_mines(exclude: HTMLButtonElement[]) {
  * @param {number} x The x-coordinate of the tile.
  * @param {number} y The y-coordinate of the tile.
  */
-function _first_click(tile: HTMLButtonElement, x: number, y: number) {
+function _first_click(tile: HTMLButtonElement, x: number, y: number): void {
     if (!first_click_happened) {
         first_click_happened = true;
-        // let surrounding_tiles = _get_surrounding_tiles(x, y)
 
-        _set_mines([tile]);
+        let surrounding_tiles: [HTMLButtonElement, number, number][] = _get_surrounding_tiles(x, y);
+        let surrounding_tiles2: HTMLButtonElement[] = [tile];
+        for (let i: number = 0; i < surrounding_tiles.length; i++) {
+            surrounding_tiles2.push(surrounding_tiles[i][0]);
+        }
+
+        _set_mines(surrounding_tiles2);
         _set_numbers();
+        _init_flags();
     }
 }
 
@@ -308,7 +315,7 @@ function _first_click(tile: HTMLButtonElement, x: number, y: number) {
  * Goes through the whole field, after the mines have been placed, and assigns the appropriate numbers to the tiles or,
  * if no mines are adjecent, leaves them blank (.textContent = ""). Mines are left intact.
  */
-function _set_numbers() {
+function _set_numbers(): void {
     // top left
     if (tiles[0][0].textContent != "M") {
         let surrounding: string = String(_bottom_is_mine(0, 0) + _right_is_mine(0, 0) + _bottom_right_is_mine(0, 0));
@@ -387,6 +394,75 @@ function _set_numbers() {
 }
 
 //
+// - ui for the amount of placed flags
+//
+
+function _init_flags(): void {
+    var flag_count = document.getElementById("flag_count");
+
+    if (flag_count === null) {
+        console.error("Could not retreive the HTMLElement with the id 'flag_count'.");
+        return;
+    }
+
+    flag_count.textContent = "0/" + String(amount_mines) + " mines";
+
+    var flags_error = document.getElementById("error_to_many_flags");
+
+    if (flags_error === null) {
+        console.error("Could not retreive the HTMLElement with the id 'error_to_many_flags'.");
+        return;
+    }
+
+    flags_error.hidden = true;
+}
+
+function _add_flag(): void {
+    var flag_count = document.getElementById("flag_count");
+
+    if (flag_count === null) {
+        console.error("Could not retreive the HTMLElement with the id 'flag_count'.");
+        return;
+    }
+
+    amount_flags++;
+    flag_count.textContent = String(amount_flags) + "/" + String(amount_mines) + " mines";
+
+    if (amount_flags > amount_mines) {
+        var flags_error = document.getElementById("error_to_many_flags");
+
+        if (flags_error === null) {
+            console.error("Could not retreive the HTMLElement with the id 'error_to_many_flags'.");
+            return;
+        }
+
+        flags_error.hidden = false;
+    }
+}
+
+function _remove_flag(): void {
+    var flag_count = document.getElementById("flag_count");
+
+    if (flag_count === null) {
+        console.error("Could not retreive the HTMLElement with the id 'flag_count'.");
+        return;
+    }
+
+    amount_flags--;
+    flag_count.textContent = String(amount_flags) + "/" + String(amount_mines) + " mines";
+
+    if (amount_flags < amount_mines) {
+        var flags_error = document.getElementById("error_to_many_flags");
+
+        if (flags_error === null) {
+            console.error("Could not retreive the HTMLElement with the id 'error_to_many_flags'.");
+            return;
+        }
+
+        flags_error.hidden = true;
+    }
+}
+//
 // - toggeling the visability of the game setup, game and the score board
 //
 
@@ -394,7 +470,7 @@ function _set_numbers() {
  * Toggles the hidden attribute for the game setup.
  * @param vis If it should be visible (true) or hidden (false).
  */
-function _set_game_setup_visability(vis: boolean) {
+function _set_game_setup_visability(vis: boolean): void {
     let x = document.getElementById("game_setup");
     if (x === null) {
         console.error("Could not retreive the HTMLElement with the id 'game_setup'.");
@@ -407,7 +483,7 @@ function _set_game_setup_visability(vis: boolean) {
  * Toggles the hidden attribute for the game.
  * @param vis If it should be visible (true) or hidden (false).
  */
-function _set_tile_visability(vis: boolean) {
+function _set_tile_visability(vis: boolean): void {
     let x = document.getElementById("game");
     if (x === null) {
         console.error("Could not retreive the HTMLElement with the id 'game'.");
@@ -420,7 +496,7 @@ function _set_tile_visability(vis: boolean) {
  * Toggles the hidden attribute for the scores overview.
  * @param vis If it should be visible (true) or hidden (false).
  */
-function _set_scores_visability(vis: boolean) {
+function _set_scores_visability(vis: boolean): void {
     let x = document.getElementById("scores");
     if (x === null) {
         console.error("Could not retreive the HTMLElement with the id 'scores'.");
@@ -438,7 +514,7 @@ function _set_scores_visability(vis: boolean) {
  * @param x The tiles x-coordinate.
  * @param y The tiles y-coordinate.
  */
-function reveal_tile(x: number, y: number) {
+function reveal_tile(x: number, y: number): void {
     let tile: HTMLButtonElement = tiles[y][x];
     _first_click(tile, x, y);
     let content = tile.textContent as string;
@@ -472,15 +548,16 @@ function reveal_tile(x: number, y: number) {
     // set flag
     } else {
 
-        // undiscovered > flag
+        // undiscovered -> flag
         if (tile_class == "tile undiscovered") {
             var img = document.createElement("img") as HTMLImageElement;
             img.src = "assets/160x160/flag.png";
             img.className = "flag_img";
             tile.appendChild(img);
             tile.className = "tile flag";
+            _add_flag();
         
-        // flag > questionmark 
+        // flag -> questionmark 
         } else if (tile_class == "tile flag") {
             tile.children[0].remove();
             var img = document.createElement("img") as HTMLImageElement;
@@ -488,31 +565,13 @@ function reveal_tile(x: number, y: number) {
             img.className = "flag_img";
             tile.appendChild(img);
             tile.className = "tile questionmark";
+            _remove_flag();
         
-        // questionmark > undiscovered
+        // questionmark -> undiscovered
         } else if (tile_class == "tile questionmark") {
             tile.children[0].remove();
             tile.className = "tile undiscovered";
         }
-    }
-
-    return;
-
-    // is a mine
-    if (content == "M") {
-        var img = document.createElement("img") as HTMLImageElement;
-        img.src = "image.png";
-        img.className = "flag_img";
-        tile.appendChild(img);
-        tile.className = "tile flag";
-    // is empty
-    } else if (content == "") {
-        tile.className = "tile empty";
-        _reveal_empty_tiles(x, y);
-    
-    // is a number
-    } else {
-        tile.className = "tile number_" + content;
     }
 }
 
@@ -522,7 +581,7 @@ function reveal_tile(x: number, y: number) {
  * @param height The height of the field / how many tiles are created per column.
  * @param amount The amount of mines that are to be created.
  */
-function create_field(width: number, height: number, amount: number) {
+function create_field(width: number, height: number, amount: number): void {
     amount_mines = amount;
     _set_game_setup_visability(false);
     _clear_field();

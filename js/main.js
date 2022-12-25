@@ -14,16 +14,19 @@ var first_click_happened = false;
  * true  > reveal tile
  */
 var click_mode = false;
+var amount_flags = 0;
 //
 // - misc
 //
 /**
- * Clears the field in the html document and overwrites `tiles` with an empty array and resets `first_click_happened`
- * to false.
+ * Clears the field in the html document and overwrites `tiles` with an empty array, resets most of the global
+ * variables (NOT: `click_mode` and `amount_mines`) and calls `_init_flags`.
  */
 function _clear_field() {
     tiles = [];
     first_click_happened = false;
+    amount_flags = 0;
+    _init_flags();
     var field = document.getElementById("field"); // HTMLDivElement
     if (field === null) {
         console.log("Could not retreive the HTMLElement with the id 'field'. This probally happened because this function is called quite often.");
@@ -265,9 +268,14 @@ function _set_mines(exclude) {
 function _first_click(tile, x, y) {
     if (!first_click_happened) {
         first_click_happened = true;
-        // let surrounding_tiles = _get_surrounding_tiles(x, y)
-        _set_mines([tile]);
+        var surrounding_tiles = _get_surrounding_tiles(x, y);
+        var surrounding_tiles2 = [tile];
+        for (var i = 0; i < surrounding_tiles.length; i++) {
+            surrounding_tiles2.push(surrounding_tiles[i][0]);
+        }
+        _set_mines(surrounding_tiles2);
         _set_numbers();
+        _init_flags();
     }
 }
 /**
@@ -341,6 +349,57 @@ function _set_numbers() {
                 tiles[y_4][x_4].textContent = surrounding == "0" ? "" : surrounding;
             }
         }
+    }
+}
+//
+// - ui for the amount of placed flags
+//
+function _init_flags() {
+    var flag_count = document.getElementById("flag_count");
+    if (flag_count === null) {
+        console.error("Could not retreive the HTMLElement with the id 'flag_count'.");
+        return;
+    }
+    flag_count.textContent = "0/" + String(amount_mines) + " mines";
+    var flags_error = document.getElementById("error_to_many_flags");
+    if (flags_error === null) {
+        console.error("Could not retreive the HTMLElement with the id 'error_to_many_flags'.");
+        return;
+    }
+    flags_error.hidden = true;
+}
+function _add_flag() {
+    var flag_count = document.getElementById("flag_count");
+    if (flag_count === null) {
+        console.error("Could not retreive the HTMLElement with the id 'flag_count'.");
+        return;
+    }
+    amount_flags++;
+    flag_count.textContent = String(amount_flags) + "/" + String(amount_mines) + " mines";
+    if (amount_flags > amount_mines) {
+        var flags_error = document.getElementById("error_to_many_flags");
+        if (flags_error === null) {
+            console.error("Could not retreive the HTMLElement with the id 'error_to_many_flags'.");
+            return;
+        }
+        flags_error.hidden = false;
+    }
+}
+function _remove_flag() {
+    var flag_count = document.getElementById("flag_count");
+    if (flag_count === null) {
+        console.error("Could not retreive the HTMLElement with the id 'flag_count'.");
+        return;
+    }
+    amount_flags--;
+    flag_count.textContent = String(amount_flags) + "/" + String(amount_mines) + " mines";
+    if (amount_flags < amount_mines) {
+        var flags_error = document.getElementById("error_to_many_flags");
+        if (flags_error === null) {
+            console.error("Could not retreive the HTMLElement with the id 'error_to_many_flags'.");
+            return;
+        }
+        flags_error.hidden = true;
     }
 }
 //
@@ -420,14 +479,15 @@ function reveal_tile(x, y) {
         // set flag
     }
     else {
-        // undiscovered > flag
+        // undiscovered -> flag
         if (tile_class == "tile undiscovered") {
             var img = document.createElement("img");
             img.src = "assets/160x160/flag.png";
             img.className = "flag_img";
             tile.appendChild(img);
             tile.className = "tile flag";
-            // flag > questionmark 
+            _add_flag();
+            // flag -> questionmark 
         }
         else if (tile_class == "tile flag") {
             tile.children[0].remove();
@@ -436,30 +496,13 @@ function reveal_tile(x, y) {
             img.className = "flag_img";
             tile.appendChild(img);
             tile.className = "tile questionmark";
-            // questionmark > undiscovered
+            _remove_flag();
+            // questionmark -> undiscovered
         }
         else if (tile_class == "tile questionmark") {
             tile.children[0].remove();
             tile.className = "tile undiscovered";
         }
-    }
-    return;
-    // is a mine
-    if (content == "M") {
-        var img = document.createElement("img");
-        img.src = "image.png";
-        img.className = "flag_img";
-        tile.appendChild(img);
-        tile.className = "tile flag";
-        // is empty
-    }
-    else if (content == "") {
-        tile.className = "tile empty";
-        _reveal_empty_tiles(x, y);
-        // is a number
-    }
-    else {
-        tile.className = "tile number_" + content;
     }
 }
 /**
