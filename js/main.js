@@ -383,6 +383,27 @@ function reveal_tile(x, y) {
     var tile = tiles[y][x];
     _first_click(tile, x, y);
     var content = tile.textContent;
+    var tile_class = tile.className;
+    // reveal tile
+    if (click_mode) {
+        // set flag
+    }
+    else {
+        // undiscovered > flag
+        if (tile_class == "tile undiscovered") {
+            var img = document.createElement("img");
+            img.src = "assets/mine.png";
+            img.className = "flag_img";
+            tile.appendChild(img);
+            tile.className = "tile flag";
+            // flag > questionmark 
+        }
+        else if (tile_class == "tile flag") {
+            // questionmark > undiscovered
+        }
+        else if (tile_class == "tile questionmark ") {
+        }
+    }
     // is a mine
     if (content == "M") {
         var img = document.createElement("img");
