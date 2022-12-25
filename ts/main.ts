@@ -15,18 +15,22 @@ var first_click_happened:boolean = false;
  * true  > reveal tile
  */
 var click_mode: boolean = false;
+var amount_flags: number = 0;
 
 //
 // - misc
 //
 
 /**
- * Clears the field in the html document and overwrites `tiles` with an empty array and resets `first_click_happened`
- * to false.
+ * Clears the field in the html document and overwrites `tiles` with an empty array and resets most of the global
+ * variables (NOT: `click_mode`).
  */
 function _clear_field() {
     tiles = [];
+    amount_mines = 0;
     first_click_happened = false;
+    amount_flags = 0;
+
     let field = document.getElementById("field"); // HTMLDivElement
     if (field === null) {
         console.log("Could not retreive the HTMLElement with the id 'field'. This probally happened because this function is called quite often.");
@@ -240,7 +244,17 @@ function _create_tiles(width: number, height: number) {
 
             tile.className = "tile undiscovered";
             tile.textContent = "";
-            tile.onclick = () => {reveal_tile(x, y)};
+            tile.oncontextmenu = () => {return false;};
+            tile.onmousedown = function(event) {
+                if (event.button == 0) {
+                    reveal_tile(x, y);
+                } else if (event.button == 2) {
+                    var click_mode_backup: boolean = click_mode;
+                    click_mode = false;
+                    reveal_tile(x, y);
+                    click_mode = click_mode_backup;
+                }
+            }
 
             tiles[y].push(tile);
         }
@@ -432,6 +446,28 @@ function reveal_tile(x: number, y: number) {
 
     // reveal tile
     if (click_mode) {
+
+        // nothing happens when there is a flag or questionmark on the tile 
+        if (tile_class == "tile undiscovered") {
+
+            // if the tile is a mine
+            if (content == "M") {
+                var img = document.createElement("img") as HTMLImageElement;
+                img.src = "assets/160x160/mine.png";
+                img.className = "flag_img";
+                tile.appendChild(img);
+                tile.className = "tile mine";
+
+            // if the tile is empty
+            } else if (content == "") {
+                tile.className = "tile empty";
+                _reveal_empty_tiles(x, y);
+            
+            // if the tile is a number
+            } else {
+                tile.className = "tile number_" + content;
+            }
+        }
         
     // set flag
     } else {
@@ -439,22 +475,28 @@ function reveal_tile(x: number, y: number) {
         // undiscovered > flag
         if (tile_class == "tile undiscovered") {
             var img = document.createElement("img") as HTMLImageElement;
-            img.src = "assets/mine.png";
+            img.src = "assets/160x160/flag.png";
             img.className = "flag_img";
             tile.appendChild(img);
             tile.className = "tile flag";
         
         // flag > questionmark 
         } else if (tile_class == "tile flag") {
+            tile.children[0].remove();
+            var img = document.createElement("img") as HTMLImageElement;
+            img.src = "assets/160x160/questionmark.png";
+            img.className = "flag_img";
+            tile.appendChild(img);
+            tile.className = "tile questionmark";
         
         // questionmark > undiscovered
-        } else if (tile_class == "tile questionmark ") {
-
+        } else if (tile_class == "tile questionmark") {
+            tile.children[0].remove();
+            tile.className = "tile undiscovered";
         }
-
-        
-    
     }
+
+    return;
 
     // is a mine
     if (content == "M") {

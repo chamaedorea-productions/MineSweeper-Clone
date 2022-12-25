@@ -210,7 +210,18 @@ function _create_tiles(width, height) {
             tile_td.appendChild(tile);
             tile.className = "tile undiscovered";
             tile.textContent = "";
-            tile.onclick = function () { reveal_tile(x, y); };
+            tile.oncontextmenu = function () { return false; };
+            tile.onmousedown = function (event) {
+                if (event.button == 0) {
+                    reveal_tile(x, y);
+                }
+                else if (event.button == 2) {
+                    var click_mode_backup = click_mode;
+                    click_mode = false;
+                    reveal_tile(x, y);
+                    click_mode = click_mode_backup;
+                }
+            };
             tiles[y].push(tile);
         };
         for (var x = 0; x < width; x++) {
@@ -386,24 +397,53 @@ function reveal_tile(x, y) {
     var tile_class = tile.className;
     // reveal tile
     if (click_mode) {
+        // nothing happens when there is a flag or questionmark on the tile 
+        if (tile_class == "tile undiscovered") {
+            // if the tile is a mine
+            if (content == "M") {
+                var img = document.createElement("img");
+                img.src = "assets/160x160/mine.png";
+                img.className = "flag_img";
+                tile.appendChild(img);
+                tile.className = "tile mine";
+                // if the tile is empty
+            }
+            else if (content == "") {
+                tile.className = "tile empty";
+                _reveal_empty_tiles(x, y);
+                // if the tile is a number
+            }
+            else {
+                tile.className = "tile number_" + content;
+            }
+        }
         // set flag
     }
     else {
         // undiscovered > flag
         if (tile_class == "tile undiscovered") {
             var img = document.createElement("img");
-            img.src = "assets/mine.png";
+            img.src = "assets/160x160/flag.png";
             img.className = "flag_img";
             tile.appendChild(img);
             tile.className = "tile flag";
             // flag > questionmark 
         }
         else if (tile_class == "tile flag") {
+            tile.children[0].remove();
+            var img = document.createElement("img");
+            img.src = "assets/160x160/questionmark.png";
+            img.className = "flag_img";
+            tile.appendChild(img);
+            tile.className = "tile questionmark";
             // questionmark > undiscovered
         }
-        else if (tile_class == "tile questionmark ") {
+        else if (tile_class == "tile questionmark") {
+            tile.children[0].remove();
+            tile.className = "tile undiscovered";
         }
     }
+    return;
     // is a mine
     if (content == "M") {
         var img = document.createElement("img");

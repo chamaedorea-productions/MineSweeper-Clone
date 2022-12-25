@@ -38,7 +38,7 @@ body {
 
 .tile.undiscovered {
     background-color: rgb(65, 52, 55);
-    /* font-size: 0%; */
+    font-size: 0%;
 }
 
 .tile.flag {
@@ -55,7 +55,16 @@ body {
 
 .flag_img {
     width: 100%;
-    height: 100%;
+    height: auto;
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+    text-align: center;
+}
+
+.tile.mine {
+    font-size: 0%;
+    background-color: red;
 }
 
 .tile.number_1 {
