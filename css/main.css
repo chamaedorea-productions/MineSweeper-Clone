@@ -39,6 +39,7 @@ body {
 .tile.undiscovered {
     background-color: rgb(65, 52, 55);
     font-size: 0%;
+    /* color: white; */
 }
 
 .tile.flag {

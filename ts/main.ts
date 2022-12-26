@@ -288,7 +288,7 @@ function _set_mines(exclude: HTMLButtonElement[]): void {
 
 /**
  * When the user reveals a tile for the first time following things will happen:
- *  > this function will call `_set_mines` using the passed tile
+ *  > this function will call `_set_mines` using the passed tile and its surrounding tiles
  *  > and `_set_numbers`
  *  > and will set `first_click_happened` so that these points will only affect the game once.
  * @param tile The tile which was clicked and will ultimately not become a mine.
@@ -372,9 +372,9 @@ function _set_numbers(): void {
 
     // last column, excluding top and bottom
     for (let y: number = 1; y < tiles.length - 1; y++) {
-        let x:number = tiles.length - 1;
+        let x: number = tiles[y].length - 1;
         if (tiles[y][x].textContent != "M") {
-            let surrounding:string = String(_top_is_mine(x, y) + _bottom_is_mine(x, y) + _left_is_mine(x, y) +
+            let surrounding: string = String(_top_is_mine(x, y) + _bottom_is_mine(x, y) + _left_is_mine(x, y) +
             _top_left_is_mine(x, y) + _bottom_left_is_mine(x, y));
             tiles[y][x].textContent = surrounding == "0" ? "" : surrounding;
         }
@@ -542,6 +542,33 @@ function reveal_tile(x: number, y: number): void {
             // if the tile is a number
             } else {
                 tile.className = "tile number_" + content;
+            }
+        
+        // if a tle with a number is clicked and there are enough flags and no questionmarks surrounding it, the tiles
+        // surrounding tiles are revealed
+        } else if (tile_class.startsWith("tile number_")) {
+            let num = Number(tile_class.charAt(tile_class.length - 1));
+            let flags: number = 0;
+
+            let surrounding_tiles: [HTMLButtonElement, number, number][] = _get_surrounding_tiles(x, y);
+            for (let i:number = 0; i < surrounding_tiles.length; i++) {
+                if (surrounding_tiles[i][0].className == "tile flag") {
+                    flags++;
+                } else if (surrounding_tiles[i][0].className == "tile questionmark") {
+                    return;
+                }
+            }
+
+            if (flags == num) {
+                let click_mode_backup: boolean = click_mode;
+                click_mode = true;
+
+                for (let i:number = 0; i < surrounding_tiles.length; i++) {
+                    if (surrounding_tiles[i][0].className == "tile undiscovered") {
+                        reveal_tile(surrounding_tiles[i][1], surrounding_tiles[i][2]);
+                    }
+                }
+                click_mode = click_mode_backup;
             }
         }
         

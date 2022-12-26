@@ -258,7 +258,7 @@ function _set_mines(exclude) {
 }
 /**
  * When the user reveals a tile for the first time following things will happen:
- *  > this function will call `_set_mines` using the passed tile
+ *  > this function will call `_set_mines` using the passed tile and its surrounding tiles
  *  > and `_set_numbers`
  *  > and will set `first_click_happened` so that these points will only affect the game once.
  * @param tile The tile which was clicked and will ultimately not become a mine.
@@ -332,7 +332,7 @@ function _set_numbers() {
     }
     // last column, excluding top and bottom
     for (var y_3 = 1; y_3 < tiles.length - 1; y_3++) {
-        var x_3 = tiles.length - 1;
+        var x_3 = tiles[y_3].length - 1;
         if (tiles[y_3][x_3].textContent != "M") {
             var surrounding = String(_top_is_mine(x_3, y_3) + _bottom_is_mine(x_3, y_3) + _left_is_mine(x_3, y_3) +
                 _top_left_is_mine(x_3, y_3) + _bottom_left_is_mine(x_3, y_3));
@@ -474,6 +474,31 @@ function reveal_tile(x, y) {
             }
             else {
                 tile.className = "tile number_" + content;
+            }
+            // if a tle with a number is clicked and there are enough flags and no questionmarks surrounding it, the tiles
+            // surrounding tiles are revealed
+        }
+        else if (tile_class.startsWith("tile number_")) {
+            var num = Number(tile_class.charAt(tile_class.length - 1));
+            var flags = 0;
+            var surrounding_tiles = _get_surrounding_tiles(x, y);
+            for (var i = 0; i < surrounding_tiles.length; i++) {
+                if (surrounding_tiles[i][0].className == "tile flag") {
+                    flags++;
+                }
+                else if (surrounding_tiles[i][0].className == "tile questionmark") {
+                    return;
+                }
+            }
+            if (flags == num) {
+                var click_mode_backup = click_mode;
+                click_mode = true;
+                for (var i = 0; i < surrounding_tiles.length; i++) {
+                    if (surrounding_tiles[i][0].className == "tile undiscovered") {
+                        reveal_tile(surrounding_tiles[i][1], surrounding_tiles[i][2]);
+                    }
+                }
+                click_mode = click_mode_backup;
             }
         }
         // set flag
