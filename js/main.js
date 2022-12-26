@@ -10,10 +10,10 @@ var tiles = [];
 var amount_mines = 0;
 var first_click_happened = false;
 /**
- * false > set flag
- * true  > reveal tile
+ * true  > set flag
+ * false > reveal tile
  */
-var click_mode = false;
+var click_mode = true;
 var amount_flags = 0;
 //
 // - misc
@@ -220,7 +220,7 @@ function _create_tiles(width, height) {
                 }
                 else if (event.button == 2) {
                     var click_mode_backup = click_mode;
-                    click_mode = false;
+                    click_mode = true;
                     reveal_tile(x, y);
                     click_mode = click_mode_backup;
                 }
@@ -455,7 +455,7 @@ function reveal_tile(x, y) {
     var content = tile.textContent;
     var tile_class = tile.className;
     // reveal tile
-    if (click_mode) {
+    if (!click_mode) {
         // nothing happens when there is a flag or questionmark on the tile 
         if (tile_class == "tile undiscovered") {
             // if the tile is a mine
@@ -492,7 +492,7 @@ function reveal_tile(x, y) {
             }
             if (flags == num) {
                 var click_mode_backup = click_mode;
-                click_mode = true;
+                click_mode = false;
                 for (var i = 0; i < surrounding_tiles.length; i++) {
                     if (surrounding_tiles[i][0].className == "tile undiscovered") {
                         reveal_tile(surrounding_tiles[i][1], surrounding_tiles[i][2]);
@@ -619,11 +619,11 @@ function toggle_click_mode() {
     var text_1 = "set flag";
     var text_2 = "reveal tile";
     if (click_mode) {
-        button.textContent = text_2;
-        label.textContent = text_1;
+        button.textContent = text_1;
+        label.textContent = "or " + text_2;
     }
     else {
-        button.textContent = text_1;
-        label.textContent = text_2;
+        button.textContent = text_2;
+        label.textContent = "or " + text_1;
     }
 }

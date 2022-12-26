@@ -11,10 +11,10 @@ var tiles: HTMLButtonElement[][] = [];
 var amount_mines: number = 0;
 var first_click_happened:boolean = false;
 /**
- * false > set flag
- * true  > reveal tile
+ * true  > set flag
+ * false > reveal tile
  */
-var click_mode: boolean = false;
+var click_mode: boolean = true;
 var amount_flags: number = 0;
 
 //
@@ -251,7 +251,7 @@ function _create_tiles(width: number, height: number) {
                     reveal_tile(x, y);
                 } else if (event.button == 2) {
                     var click_mode_backup: boolean = click_mode;
-                    click_mode = false;
+                    click_mode = true;
                     reveal_tile(x, y);
                     click_mode = click_mode_backup;
                 }
@@ -521,7 +521,7 @@ function reveal_tile(x: number, y: number): void {
     let tile_class: string = tile.className;
 
     // reveal tile
-    if (click_mode) {
+    if (!click_mode) {
 
         // nothing happens when there is a flag or questionmark on the tile 
         if (tile_class == "tile undiscovered") {
@@ -561,7 +561,7 @@ function reveal_tile(x: number, y: number): void {
 
             if (flags == num) {
                 let click_mode_backup: boolean = click_mode;
-                click_mode = true;
+                click_mode = false;
 
                 for (let i:number = 0; i < surrounding_tiles.length; i++) {
                     if (surrounding_tiles[i][0].className == "tile undiscovered") {
@@ -709,10 +709,10 @@ function toggle_click_mode(): void {
     var text_2: string = "reveal tile";
 
     if (click_mode) {
-        button.textContent = text_2;
-        label.textContent = text_1;
-    } else {
         button.textContent = text_1;
-        label.textContent = text_2;
+        label.textContent = "or " + text_2;
+    } else {
+        button.textContent = text_2;
+        label.textContent = "or " + text_1;
     }
 }
