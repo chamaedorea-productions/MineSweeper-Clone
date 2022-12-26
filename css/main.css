@@ -102,7 +102,6 @@ body {
 .tile.number_8 {
     background-color: gray;
 }
-/* click_mode */
 
 .game_tools {
     background-color: rgb(116, 108, 108);
@@ -133,4 +132,8 @@ body {
     margin: 5px;
     font-size: 5vh;
     text-align: center;
+}
+
+.error {
+    color: #dd9292;
 }

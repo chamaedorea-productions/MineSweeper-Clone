@@ -16,6 +16,8 @@ var first_click_happened:boolean = false;
  */
 var click_mode: boolean = true;
 var amount_flags: number = 0;
+var game_over: boolean = false;
+var discovered_tiles: number = 0;
 
 //
 // - misc
@@ -23,14 +25,19 @@ var amount_flags: number = 0;
 
 /**
  * Clears the field in the html document and overwrites `tiles` with an empty array, resets most of the global
- * variables (NOT: `click_mode` and `amount_mines`) and calls `_init_flags`.
+ * variables (NOT: `click_mode` and `amount_mines`) and calls `_init_flags`, `death_screen_hide` and
+ * `victory_screen_hide`.
  */
 function _clear_field(): void {
     tiles = [];
     first_click_happened = false;
     amount_flags = 0;
+    game_over = false;
+    discovered_tiles = 0;
 
     _init_flags();
+    death_screen_hide();
+    victory_screen_hide();
 
     let field = document.getElementById("field"); // HTMLDivElement
     if (field === null) {
@@ -96,7 +103,8 @@ function _get_surrounding_tiles(x: number, y: number): [HTMLButtonElement, numbe
  * @param y The y-coordinate of the revealed tile.
  */
 function _reveal_empty_tiles(x: number, y: number): void {
-    // Getting the tiles that suuound the passed tile.
+
+    // Getting the tiles that suround the passed tile.
     let surrounding_tiles = _get_surrounding_tiles(x, y);
 
     // Looping through them.
@@ -106,15 +114,19 @@ function _reveal_empty_tiles(x: number, y: number): void {
         let x_: number = surrounding_tiles[i][1];
         let y_: number = surrounding_tiles[i][2]
         
-        // Something only appens, when the adjecent tile wasn't revealed by the user.
+        // Something only happens, when the adjecent tile wasn't revealed by the user.
         if (tile.className == "tile undiscovered") {
+
             // If the tile has no content it is empty and this function is called recursively.
             if (tile.textContent == "") {
                 tile.className = "tile empty";
+                discovered_tiles++; 
                 _reveal_empty_tiles(x_, y_);
+
             // If the tile isn't a mine it is a number and can be revealed.
             } else if (tile.textContent != "M") {
                 tile.className = "tile number_" + Number(tile.textContent);
+                discovered_tiles++;
             }
         }
     }
@@ -218,7 +230,7 @@ function _bottom_right_is_mine(x: number, y: number): number {
  * @param height The height of the field / how many tiles are created per column.
  */
 function _create_tiles(width: number, height: number) {
-    let game = document.getElementById("field_container"); // HTMLDivElement
+    let game = document.getElementById("field_container"); 
     let field: HTMLTableElement = document.createElement("table");
 
     if (game === null) {
@@ -397,6 +409,10 @@ function _set_numbers(): void {
 // - ui for the amount of placed flags
 //
 
+/**
+ * Sets the flag count and the ui in the html document to zero and hides error which occurs if there are more flags
+ * than mines.
+ */
 function _init_flags(): void {
     var flag_count = document.getElementById("flag_count");
 
@@ -417,6 +433,9 @@ function _init_flags(): void {
     flags_error.hidden = true;
 }
 
+/**
+ * Adds a flag to the html documents ui and shows an error if there are more flags than mines.
+ */
 function _add_flag(): void {
     var flag_count = document.getElementById("flag_count");
 
@@ -440,6 +459,9 @@ function _add_flag(): void {
     }
 }
 
+/**
+ * Removes a flag from the html documents ui and hides error which occurs if there are more flags than mines.
+ */
 function _remove_flag(): void {
     var flag_count = document.getElementById("flag_count");
 
@@ -462,6 +484,7 @@ function _remove_flag(): void {
         flags_error.hidden = true;
     }
 }
+
 //
 // - toggeling the visability of the game setup, game and the score board
 //
@@ -506,6 +529,122 @@ function _set_scores_visability(vis: boolean): void {
 }
 
 //
+// - death screen
+//
+
+/**
+ * Sets some stuff for the death screen ui.
+ * @param time_spent How long the user took to until they died.
+ * @param size_width How wide the field was / how many tilea were in a row.
+ * @param size_height How high the field was / how many tilea were in a column.
+ * @param amount The amount of mines.
+ */
+function death_screen_set_stuff(time_spent: string, size_width: string, size_height: string, amount: string): void {
+    let t = document.getElementById("death_screen_time_spent") as HTMLElement;
+    let s = document.getElementById("death_screen_size") as HTMLElement;
+    let a = document.getElementById("death_screen_amount_mines") as HTMLElement;
+
+    if (t === null) {
+        console.error("Could not retreive the HTMLElement with the id 'death_screen_time_spent'.");
+        return;
+    }
+    if (s === null) {
+        console.error("Could not retreive the HTMLElement with the id 'death_screen_size'.");
+        return;
+    }
+    if (a === null) {
+        console.error("Could not retreive the HTMLElement with the id 'death_screen_amount_mines'.");
+        return;
+    }
+
+    t.textContent = time_spent;
+    s.textContent = size_width + "x" + size_height;
+    a.textContent = amount;
+}
+
+/**
+ * Hides the death screen ui.
+ */
+function death_screen_hide() {
+    let v = document.getElementById("death_screen") as HTMLElement;
+    if (v === null) {
+        console.error("Could not retreive the HTMLElement with the id 'death_screen'.");
+        return;
+    }
+    v.hidden = true;
+}
+
+/**
+ * Shows the death screen ui.
+ */
+function death_screen_show() {
+    let v = document.getElementById("death_screen") as HTMLElement;
+    if (v === null) {
+        console.error("Could not retreive the HTMLElement with the id 'death_screen'.");
+        return;
+    }
+    v.hidden = false;
+}
+
+//
+// - victory screen 
+//
+
+/**
+ * Sets some stuff for the victory screen ui.
+ * @param time_spent How long the user took to win.
+ * @param size_width How wide the field was / how many tilea were in a row.
+ * @param size_height How high the field was / how many tilea were in a column.
+ * @param amount The amount of mines.
+ */
+function victory_screen_set_stuff(time_spent: string, size_width: string, size_height: string, amount: string): void {
+    let t = document.getElementById("victory_screen_time_spent") as HTMLElement;
+    let s = document.getElementById("victory_screen_size") as HTMLElement;
+    let a = document.getElementById("victory_screen_amount_mines") as HTMLElement;
+
+    if (t === null) {
+        console.error("Could not retreive the HTMLElement with the id 'victory_screen_time_spent'.");
+        return;
+    }
+    if (s === null) {
+        console.error("Could not retreive the HTMLElement with the id 'victory_screen_size'.");
+        return;
+    }
+    if (a === null) {
+        console.error("Could not retreive the HTMLElement with the id 'victory_screen_amount_mines'.");
+        return;
+    }
+
+    t.textContent = time_spent;
+    s.textContent = size_width + "x" + size_height;
+    a.textContent = amount;
+}
+
+/**
+ * Hides the victory screen ui.
+ */
+function victory_screen_hide() {
+    let v = document.getElementById("victory_screen") as HTMLElement;
+    if (v === null) {
+        console.error("Could not retreive the HTMLElement with the id 'victory_screen'.");
+        return;
+    }
+    v.hidden = true;
+}
+
+/**
+ * Shows the victory screen ui.
+ */
+function victory_screen_show() {
+    let v = document.getElementById("victory_screen") as HTMLElement;
+    if (v === null) {
+        console.error("Could not retreive the HTMLElement with the id 'victory_screen'.");
+        return;
+    }
+    v.hidden = false;
+}
+
+//
 // - called from html document
 //
 
@@ -515,6 +654,10 @@ function _set_scores_visability(vis: boolean): void {
  * @param y The tiles y-coordinate.
  */
 function reveal_tile(x: number, y: number): void {
+    if (game_over) {
+        return;
+    }
+
     let tile: HTMLButtonElement = tiles[y][x];
     _first_click(tile, x, y);
     let content = tile.textContent as string;
@@ -533,15 +676,19 @@ function reveal_tile(x: number, y: number): void {
                 img.className = "flag_img";
                 tile.appendChild(img);
                 tile.className = "tile mine";
-                console.log("DEAD!");
+                game_over = true;
+                death_screen_set_stuff("", String(tiles[0].length), String(tiles.length), String(amount_mines));
+                death_screen_show();
 
             // if the tile is empty
             } else if (content == "") {
+                discovered_tiles++;
                 tile.className = "tile empty";
                 _reveal_empty_tiles(x, y);
             
             // if the tile is a number
             } else {
+                discovered_tiles++;
                 tile.className = "tile number_" + content;
             }
         
@@ -601,6 +748,13 @@ function reveal_tile(x: number, y: number): void {
             tile.className = "tile undiscovered";
         }
     }
+
+    console.log(discovered_tiles);
+    if (discovered_tiles == (tiles[0].length * tiles.length - amount_mines)) {
+        victory_screen_set_stuff("", String(tiles[0].length), String(tiles.length), String(amount_mines));
+        victory_screen_show();
+        game_over = true;        
+    }    
 }
 
 /**
@@ -647,9 +801,9 @@ function custom_setup(): void {
     }
     let amount = Number(x.value);
 
-    if (amount + 1 > width * height) {
+    if (amount + 9 > width * height) {
         // ERROR
-        console.error("TO MANY MINES!!!");
+        console.error("TO MANY MINES!!! (Just reduce the amount of mines.)");
         _set_game_setup_visability(true);
         return;
     }
@@ -691,6 +845,9 @@ function back_button(): void {
     _set_game_setup_visability(true);
 }
 
+/**
+ * Changes the buuton and label content.
+ */
 function toggle_click_mode(): void {
     var button = document.getElementById("game_click_mode_button");
     var label = document.getElementById("game_click_mode_label");

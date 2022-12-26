@@ -1,0 +1,42 @@
+.victory_screen {
+    background-color: chartreuse;
+
+    position: absolute;
+    /* z-index: 5065; */
+    top: 25vh;
+    left: 40vw;
+
+    width: 20vw;
+
+    text-align: center;
+    font-size: 5vh;
+
+    border: 0px;
+    margin: 0px;
+    padding: 1vh;
+}
+
+.victory_screen button {
+    background-color: rgba(0, 0, 0, 0.336);
+
+    height: 8vh;
+
+    border: 0px;
+    margin: 0px;
+    padding: 1vh;
+
+    font-size: 5vh;
+}
+
+.victory_screen input {
+    background-color: rgba(0, 0, 0, 0.336);
+
+    height: 6vh;
+    width: 19vw;
+
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+
+    font-size: 5vh;
+}

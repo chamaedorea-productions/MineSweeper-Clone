@@ -1,0 +1,17 @@
+.death_screen {
+    background-color: chartreuse;
+
+    position: absolute;
+    /* z-index: 5065; */
+    top: 25vh;
+    left: 40vw;
+
+    width: 20vw;
+
+    text-align: center;
+    font-size: 5vh;
+
+    border: 0px;
+    margin: 0px;
+    padding: 1vh;
+}

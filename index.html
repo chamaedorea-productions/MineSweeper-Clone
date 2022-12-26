@@ -8,6 +8,8 @@
 </head>
 <body>
     <link rel="stylesheet" type="text/css" href="css/main.css">
+    <link rel="stylesheet" type="text/css" href="css/death_screen.css">
+    <link rel="stylesheet" type="text/css" href="css/victory_screen.css">
 
     <script type="text/javascript" src="js/main.js"></script>
 
@@ -57,7 +59,7 @@
                                     <label for="custom_width" class="select_game_button_custom_label">width</label>
                                 </td>
                                 <td>
-                                    <input type="number" id="custom_width" min="1" value="8" class="select_game_button_custom_input">
+                                    <input type="number" id="custom_width" min="4" value="8" class="select_game_button_custom_input">
                                 </td>
                             </tr>
                             <tr>
@@ -65,7 +67,7 @@
                                 <label for="custom_height" class="select_game_button_custom_label">height</label> 
                                 </td>
                                 <td>
-                                    <input type="number" id="custom_height" min="1" value="8" class="select_game_button_custom_input">
+                                    <input type="number" id="custom_height" min="4" value="8" class="select_game_button_custom_input">
                                 </td>
                             </tr>
                             <tr>
@@ -105,9 +107,39 @@
             <div id="flag_count">
                 X/X mines
             </div>
-            <div id="error_to_many_flags" hidden>
+            <div id="error_to_many_flags" class="error" hidden>
                 To many flags set!
             </div>
+        </div>
+    </div>
+
+    <div id="death_screen" class="death_screen" hidden>
+        <div id="death_screen_time_spent">
+            time spent
+        </div>
+        <div id="death_screen_size">
+            size wxh
+        </div>
+        <div id="death_screen_amount_mines">
+            amount mines
+        </div>
+    </div>
+
+    <div id="victory_screen" class="victory_screen" hidden>
+        <div>
+            <input type="text" maxlength="12">
+        </div>
+        <div id="victory_screen_time_spent">
+            time spent
+        </div>
+        <div id="victory_screen_size">
+            size wxh
+        </div>
+        <div id="victory_screen_amount_mines">
+            amount mines
+        </div>
+        <div>
+            <button>Submit</button>
         </div>
     </div>
     
