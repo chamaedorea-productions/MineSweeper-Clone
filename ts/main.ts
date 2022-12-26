@@ -533,6 +533,7 @@ function reveal_tile(x: number, y: number): void {
                 img.className = "flag_img";
                 tile.appendChild(img);
                 tile.className = "tile mine";
+                console.log("DEAD!");
 
             // if the tile is empty
             } else if (content == "") {
