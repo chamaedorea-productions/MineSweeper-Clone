@@ -14,7 +14,92 @@
     <script type="text/javascript" src="js/main.js"></script>
 
     <div id="game_setup">
-        <div>
+        <table>
+            <tr>
+                <td>
+                    <div>
+                        <button class="select_game_button" onclick="create_field(8, 8, 10)">
+                            <div>
+                                8x8
+                                <div>
+                                    10 mines
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </td>
+                <td>
+                    <div>
+                        <button class="select_game_button" onclick="create_field(16, 16, 40)">
+                            <div>
+                                16x16
+                                <div>
+                                    40 mines
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div>
+                        <button class="select_game_button" onclick="create_field(32, 16, 100)">
+                            <div>
+                                32x16
+                                <div>
+                                    100 mines
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </td>
+                <td>
+                    <div style="float: left;">
+                        <div style="border: 0px; margin: 5px;" id="custom_interface" hidden>
+                            <table style="width: 40vh; height: 20vh;">
+                                <tr>
+                                    <td>
+                                        <label for="custom_width" class="select_game_button_custom_label">width</label>
+                                    </td>
+                                    <td>
+                                        <input type="number" id="custom_width" min="4" value="8" class="select_game_button_custom_input">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                    <label for="custom_height" class="select_game_button_custom_label">height</label> 
+                                    </td>
+                                    <td>
+                                        <input type="number" id="custom_height" min="4" value="8" class="select_game_button_custom_input">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <label for="custom_amount_mines" class="select_game_button_custom_label">amount mines</label>
+                                    </td>
+                                    <td>
+                                        <input type="number" id="custom_amount_mines" min="1" value="10" class="select_game_button_custom_input">
+                                    </td>
+                                </tr>
+                            </table>
+    
+                            <button class="select_game_button_custom_button" onclick="custom_setup()">create</button>
+                        </div>
+    
+                        <button class="select_game_button" onclick="toggle_custom_input(true)" id="custom_button">
+                            <div>
+                                ?
+                                <div>
+                                    custom
+                                </div>
+                            </div>
+                        </button>
+                    </div> 
+                </td>
+            </tr>
+        </table>
+        <!-- <div>
             <div>
                 <div style="float: left;">
                     <button class="select_game_button" onclick="create_field(8, 8, 10)">
@@ -93,7 +178,7 @@
                     </button>
                 </div> 
             </div>
-        </div>
+        </div> -->
     </div>
 
     <div id="game" hidden>
