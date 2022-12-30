@@ -1,0 +1,19 @@
+.game_tools {
+    background-color: rgb(116, 108, 108);
+    float: right;
+    width: 15vw;
+    height: 100vh;
+    text-align: center;
+}
+
+.game_tools_back {
+    width: 90%;
+    border: 0px;
+    margin: 5px;
+    font-size: 10vh;
+    text-align: center;
+}
+
+.text {
+    font-size: 4vh;
+}

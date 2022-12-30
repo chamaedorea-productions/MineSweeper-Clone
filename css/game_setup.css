@@ -1,0 +1,32 @@
+.select_game_button {
+    width: 40vh;
+    height: 40vh;
+    border: 0px;
+    margin: 5px;
+    font-size: 4vh;
+}
+
+.select_game_input {
+    width: 20vh;
+    height: 2vh;
+}
+
+.select_game_label {
+    width: 20vh;
+    height: 2vh;
+}
+
+.select_game_custom_button {
+    width: 40vh;
+    height: 20vh;
+    margin: 0px;
+    border: 0px;
+    font-size: 4vh;
+}
+
+.scores_button {
+    margin: 0px;
+    border: 0px;
+    font-size: 4vh;
+    width: 100%;
+}

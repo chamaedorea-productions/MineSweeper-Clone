@@ -1,0 +1,70 @@
+.img {
+    width: 100%;
+    height: auto;
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+    text-align: center;
+}
+
+.tile {
+    background-color: rgb(46, 39, 40);
+    width: 10vh;
+    height: 10vh;
+    font-size: 8vh;
+    text-align: center;
+    border: 0px;
+}
+
+.tile.undiscovered {
+    font-size: 0%;
+}
+
+.tile.flag {
+    font-size: 0%;
+}
+
+.tile.questionmark {
+    font-size: 0%;
+}
+
+.tile.empty {
+    background-color: rgb(167, 159, 160);
+}
+
+.tile.mine {
+    font-size: 0%;
+    background-color: red;
+}
+
+.tile.number_1 {
+    background-color: blue;
+}
+
+.tile.number_2 {
+    background-color: green;
+}
+
+.tile.number_3 {
+    background-color: red;
+}
+
+.tile.number_4 {
+    background-color: purple;
+}
+
+.tile.number_5 {
+    background-color: maroon;
+}
+
+.tile.number_6 {
+    background-color: turquoise;
+}
+
+.tile.number_7 {
+    background-color: rgb(65, 65, 65);
+}
+
+.tile.number_8 {
+    background-color: gray;
+}

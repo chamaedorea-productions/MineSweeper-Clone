@@ -7,14 +7,22 @@
     <title>MineSweeper-Clone</title>
 </head>
 <body>
-    <link rel="stylesheet" type="text/css" href="css/main.css">
     <link rel="stylesheet" type="text/css" href="css/death_screen.css">
+    <link rel="stylesheet" type="text/css" href="css/game_setup.css">
+    <link rel="stylesheet" type="text/css" href="css/game_tools.css">
+    <link rel="stylesheet" type="text/css" href="css/game.css">
+    <link rel="stylesheet" type="text/css" href="css/leaderboard.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <link rel="stylesheet" type="text/css" href="css/tiles.css">
     <link rel="stylesheet" type="text/css" href="css/victory_screen.css">
 
-    <script type="text/javascript" src="js/main.js"></script>
+    <script type="text/javascript" src="js/main.js" defer></script>
 
     <div id="game_setup">
-        <table>
+        <div>
+            
+        </div>
+        <table style="margin: auto;">
             <tr>
                 <td>
                     <div>
@@ -55,36 +63,36 @@
                     </div>
                 </td>
                 <td>
-                    <div style="float: left;">
+                    <div>
                         <div style="border: 0px; margin: 5px;" id="custom_interface" hidden>
                             <table style="width: 40vh; height: 20vh;">
                                 <tr>
                                     <td>
-                                        <label for="custom_width" class="select_game_button_custom_label">width</label>
+                                        <label for="custom_width" class="select_game_label">width</label>
                                     </td>
                                     <td>
-                                        <input type="number" id="custom_width" min="4" value="8" class="select_game_button_custom_input">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                    <label for="custom_height" class="select_game_button_custom_label">height</label> 
-                                    </td>
-                                    <td>
-                                        <input type="number" id="custom_height" min="4" value="8" class="select_game_button_custom_input">
+                                        <input type="number" id="custom_width" min="4" value="8" class="select_game_input">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>
-                                        <label for="custom_amount_mines" class="select_game_button_custom_label">amount mines</label>
+                                        <label for="custom_height" class="select_game_label">height</label> 
                                     </td>
                                     <td>
-                                        <input type="number" id="custom_amount_mines" min="1" value="10" class="select_game_button_custom_input">
+                                        <input type="number" id="custom_height" min="4" value="8" class="select_game_input">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <label for="custom_amount_mines" class="select_game_label">amount mines</label>
+                                    </td>
+                                    <td>
+                                        <input type="number" id="custom_amount_mines" min="1" value="10" class="select_game_input">
                                     </td>
                                 </tr>
                             </table>
     
-                            <button class="select_game_button_custom_button" onclick="custom_setup()">create</button>
+                            <button class="select_game_custom_button" onclick="custom_setup()">create</button>
                         </div>
     
                         <button class="select_game_button" onclick="toggle_custom_input(true)" id="custom_button">
@@ -98,87 +106,14 @@
                     </div> 
                 </td>
             </tr>
+            <tr>
+                <td colspan="2">
+                    <button class="scores_button" onclick="go_to_leaderboard()">
+                        leaderboard
+                    </button>
+                </td>
+            </tr>      
         </table>
-        <!-- <div>
-            <div>
-                <div style="float: left;">
-                    <button class="select_game_button" onclick="create_field(8, 8, 10)">
-                        <div>
-                            8x8
-                            <div>
-                                10 mines
-                            </div>
-                        </div>
-                    </button>
-                </div>
-                
-                <div>
-                    <button class="select_game_button" onclick="create_field(16, 16, 40)">
-                        <div>
-                            16x16
-                            <div>
-                                40 mines
-                            </div>
-                        </div>
-                    </button>
-                </div>
-            </div>
-            
-            <div>
-                <div style="float: left;">
-                    <button class="select_game_button" onclick="create_field(32, 16, 100)">
-                        <div>
-                            32x16
-                            <div>
-                                100 mines
-                            </div>
-                        </div>
-                    </button>
-                </div>
-                           
-                <div style="float: left;">
-                    <div style="border: 0px; margin: 5px;" id="custom_interface" hidden>
-                        <table style="width: 40vh; height: 20vh;">
-                            <tr>
-                                <td>
-                                    <label for="custom_width" class="select_game_button_custom_label">width</label>
-                                </td>
-                                <td>
-                                    <input type="number" id="custom_width" min="4" value="8" class="select_game_button_custom_input">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                <label for="custom_height" class="select_game_button_custom_label">height</label> 
-                                </td>
-                                <td>
-                                    <input type="number" id="custom_height" min="4" value="8" class="select_game_button_custom_input">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <label for="custom_amount_mines" class="select_game_button_custom_label">amount mines</label>
-                                </td>
-                                <td>
-                                    <input type="number" id="custom_amount_mines" min="1" value="10" class="select_game_button_custom_input">
-                                </td>
-                            </tr>
-                        </table>
-
-                        <button class="select_game_button_custom_button" onclick="custom_setup()">create</button>
-                    </div>
-
-                    <button class="select_game_button" onclick="toggle_custom_input(true)" id="custom_button">
-                        <div>
-                            ?
-                            <div>
-                                custom
-                            </div>
-                        </div>
-                    </button>
-                </div> 
-            </div>
-        </div> -->
     </div>
 
     <div id="game" hidden>
@@ -189,12 +124,17 @@
             <button class="game_click_mode_button" id="game_click_mode_button" onclick="toggle_click_mode()">reveal tile</button>
             <label for="game_click_mode_button" id="game_click_mode_label">or set flag</label>
 
-            <div id="flag_count">
+            <div id="flag_count" class="text">
                 X/X mines
             </div>
-            <div id="error_to_many_flags" class="error" hidden>
-                To many flags set!
+            <div class="text">
+                <div id="error_to_many_flags" class="error" hidden>
+                    To many flags set!
+                </div>
             </div>
+            <!-- <div id="passed_time">
+
+            </div> -->
         </div>
     </div>
 
@@ -212,7 +152,7 @@
 
     <div id="victory_screen" class="victory_screen" hidden>
         <div>
-            <input type="text" maxlength="12">
+            <input type="text" maxlength="12" id="user_name">
         </div>
         <div id="victory_screen_time_spent">
             time spent
@@ -224,12 +164,14 @@
             amount mines
         </div>
         <div>
-            <button>Submit</button>
+            <button onclick="set_score()">Submit</button>
         </div>
     </div>
     
-    <div id="scores" hidden>
-
+    <div id="leaderboard" hidden class="leaderboard">
+        <button onclick="back_from_leaderboard()">back</button>
+        <select id="LEADERBOARD_SIZE_MINE_SELECT" onchange="leaderboard.select_leaderboard_to_show();"></select>
+        <div id="LEADERBOARD_ENTRYS"></div>
     </div>
 </body>
 </html>

@@ -1,0 +1,38 @@
+.leaderboard {
+    font-size: 8vh;
+}
+
+.leaderboard button {
+    margin: 0px;
+    border: 0px;
+    padding: 0px;
+
+    margin-bottom: 5px;
+
+    width: 100vw;
+    height: 9vh;
+
+    font-size: 8vh;
+}
+
+.leaderboard select {
+    margin: 0px;
+    border: 0px;
+    padding: 0px;
+
+    width: 100vw;
+    height: 9vh;
+
+    font-size: 8vh;
+    text-align: center;
+}
+
+/* .leaderboard option {
+    font-size: 3vh;
+} */
+
+.leaderboard table {
+    font-size: 5vh;
+    text-align: center;
+    margin: auto;
+}

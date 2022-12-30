@@ -14,10 +14,345 @@ var first_click_happened:boolean = false;
  * true  > set flag
  * false > reveal tile
  */
-var click_mode: boolean = true;
+var click_mode: boolean = false;
 var amount_flags: number = 0;
 var game_over: boolean = false;
 var discovered_tiles: number = 0;
+
+/**
+ * Data structure:
+ *  Size: <width>x<height>
+ *  localstorage:
+ *  (No trailing "|")
+ *  
+ *  ------------------b64------------------ ...
+ *  -------b64------- | -------b64------- | ...
+ *  <username>|<time>   <username>|<time>   ...
+ */
+class LeaderboardSize {
+
+    private SIZE: string;
+    private AMOUNT_MINES: number;
+
+    private AMOUNT_USERS: number;
+    private LS_KEY: string;
+    private OPTION_VALUE: string;
+    private OPTION_TEXT: string;
+
+    private HTML_TABLE: HTMLTableElement;
+    private UI_TABLE_CONTAINER_ID: string;
+
+    private leaders: [string, number][];
+
+    public constructor(size: string, amount: number, private UI_SELECT_ID: string, private LS_CONTENT_DIVIDER: string) {
+        this.SIZE = size;
+        this.AMOUNT_MINES = amount;
+
+        this.AMOUNT_USERS = 10;
+        this.LS_KEY = "LEADERBOARD_SIZE_" + this.SIZE + "_MINES_" + this.AMOUNT_MINES;
+        this.OPTION_VALUE = this.SIZE + this.LS_CONTENT_DIVIDER + this.AMOUNT_MINES;
+        this.OPTION_TEXT = this.SIZE + " " + this.AMOUNT_MINES;
+
+        this.UI_TABLE_CONTAINER_ID = "LEADERBOARD_ENTRYS"; //_" + this.SIZE;
+
+        this.leaders = [];
+
+        this.get_from_localstorage();
+        this.create_ui();
+        this.add_option();
+    }
+
+    private add_option(): void {
+        var selection_element = document.getElementById(this.UI_SELECT_ID) as HTMLSelectElement;
+
+        if (selection_element === null) {
+            console.error("Could not retreive html element with id " + this.UI_SELECT_ID + ".");
+            return;
+        }
+
+        var option: HTMLOptionElement = document.createElement("option");
+        option.textContent = this.OPTION_TEXT;
+        option.value = this.OPTION_VALUE;
+
+        selection_element.appendChild(option);
+    }
+
+    private get_from_localstorage(): void {
+        var ls_data = localStorage.getItem(this.LS_KEY);
+
+        if (ls_data === null) {
+            console.info("Could not reteive values from localstorage key " + this.LS_KEY + " creating it now.");
+            localStorage.setItem(this.LS_KEY, "");
+            return;
+        }
+
+        ls_data = atob(ls_data); // b64 decode
+
+        if (ls_data === null) {
+            console.error("Could not b64 decode local storage value from key " + this.LS_KEY + ".");
+            return;
+        }
+
+        var user_data: string[] = ls_data.split(this.LS_CONTENT_DIVIDER);
+
+        for (var user: number = 0; user < user_data.length; user++) {
+            var data: string = user_data[user];
+            data = atob(data); // b64 decode
+
+            if (data === null) {
+                console.error("Could not decode user data from local storage value from key " + this.LS_KEY + ".");
+                continue;
+            }
+
+            var data_parts = data.split(this.LS_CONTENT_DIVIDER) as [string, string];
+
+            if (data_parts.length != 2) {
+                console.error("Could not decode user data from local storage value from key " + this.LS_KEY + " into enough parts (got: " + String(data_parts.length) + " expected: 2).");
+                continue;
+            }
+
+            this.leaders.push([data_parts[0], Number(data_parts[1])]);
+        }
+
+        console.log(this.leaders);
+    }
+
+    private set_to_localstorage(): void {
+        var value: string = "";
+
+        for (var user: number = 0; user < this.leaders.length; user++) {
+            value = value + btoa(this.leaders[user][0] + "|" + String(this.leaders[user][1])) + "|"
+        }
+
+        value = value.substring(0, value.length - 1);
+        value = btoa(value);
+
+        localStorage.setItem(this.LS_KEY, value);
+    }
+
+    private create_ui(): void {
+        this.HTML_TABLE = document.createElement("table");
+        this.HTML_TABLE.id = this.LS_KEY;
+        this.HTML_TABLE.hidden = true;
+
+        for (var user: number = 0; user < this.leaders.length; user++) {
+            var tr: HTMLTableRowElement = document.createElement("tr");
+
+            var td: HTMLTableCellElement = document.createElement("td");
+            td.textContent = this.leaders[user][0];
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.textContent = String(this.leaders[user][1]);
+            tr.appendChild(td);
+
+            this.HTML_TABLE.appendChild(tr);
+        }
+
+        var table_container = document.getElementById(this.UI_TABLE_CONTAINER_ID);
+
+        if (table_container === null) {
+            console.error("Could not access html element with id: " + this.UI_TABLE_CONTAINER_ID + ".");
+            return;
+        }
+
+        table_container.appendChild(this.HTML_TABLE);
+    }
+
+    private reload_ui() {
+        this.HTML_TABLE.remove();
+        this.create_ui();
+    }
+
+    public add_user(user_name: string, time: number): void {
+        var added_user: boolean = false;
+        for (var user: number = 0; user < this.leaders.length; user++) {
+            if (time < this.leaders[user][1]) {
+                // insterts after the index user
+                this.leaders.splice(user, 0, [user_name, time]);
+                added_user = true;
+                break;
+            }
+        }
+
+        if (this.leaders.length == 0) {
+            this.leaders.push([user_name, time]);
+        } else if (!added_user) {
+            this.leaders.splice(this.leaders.length, 0, [user_name, time]);
+        }
+
+        if (this.leaders.length > this.AMOUNT_USERS) {
+            this.leaders.pop();
+        }
+
+        this.set_to_localstorage();
+        this.reload_ui();
+    }
+
+    public hide(): void {
+        this.HTML_TABLE.hidden = true;
+    }
+
+    public show(): void {
+        this.HTML_TABLE.hidden = false;
+    }
+}
+
+/**
+ * Data:
+ * (Has trailing "|")
+ *  
+ *  -------------------b64------------------- | -------------------b64------------------- | ... |
+ *  <size_width>x<size_height>|<amount_mines> | <size_width>x<size_height>|<amount_mines> | ... |
+ */
+class Leaderboard {
+
+    private LS_KEY: string;
+    private LS_CONTENT_DIVIDER: string;
+    private UI_SELECT_ID: string;
+    private LEADERBOARD_ID: string;
+
+    private leader_boards: Map<string, LeaderboardSize>;
+    private last_leaderboard_shown: string|null;
+
+    public constructor() {
+        this.LS_KEY = "LEADERBOARD";
+        this.LS_CONTENT_DIVIDER = "|";
+        this.UI_SELECT_ID = "LEADERBOARD_SIZE_MINE_SELECT";
+        this.LEADERBOARD_ID = "leaderboard";
+
+        this.leader_boards = new Map();
+        this.last_leaderboard_shown = null;
+
+        this.get_from_localstorage();
+    }
+
+    private get_from_localstorage(): void {
+        var ls_data = localStorage.getItem(this.LS_KEY);
+
+        if (ls_data === null) {
+            console.info("Could not retreive contents from local storage key: " + this.LS_KEY + " creating it now.");
+            localStorage.setItem(this.LS_KEY, "");
+            return;
+        }
+
+        var b64_data: string[] = ls_data.split(this.LS_CONTENT_DIVIDER);
+
+        for (var data: number = 0; data < b64_data.length - 1; data++) {
+            var decoded_data = atob(b64_data[data]);
+            var parts = decoded_data.split(this.LS_CONTENT_DIVIDER);
+
+            if (parts.length != 2) {
+                console.error("Could not successfully split data from localstorage key " + this.LS_KEY + " (got: " + parts.length + " expected: 2).");
+                continue;
+            }
+
+            this.leader_boards.set(
+                decoded_data,
+                new LeaderboardSize(
+                    parts[0],
+                    Number(parts[1]),
+                    this.UI_SELECT_ID,
+                    this.LS_CONTENT_DIVIDER
+                )
+            );
+        }
+    }
+
+    private set_to_localstorage(): void {
+        var set_to = "";
+        var keys = this.leader_boards.keys();
+
+        while (true) {
+            var stuff = keys.next() as IteratorResult<string>;
+            var done = stuff.done;
+
+            if ((done) || (done === undefined)) {
+                break;
+            }
+
+            set_to = set_to + btoa(stuff.value) + "|";
+        }
+
+        localStorage.setItem(this.LS_KEY, set_to);
+    }
+
+    public add_user(user_name: string, time: number, size: string, amount: number): void {
+        var dict_key: string = size + this.LS_CONTENT_DIVIDER + amount;
+        var dict_element = this.leader_boards.get(dict_key);
+
+        if (dict_element === undefined) {
+            dict_element = new LeaderboardSize(size, amount, this.UI_SELECT_ID, this.LS_CONTENT_DIVIDER);
+            this.leader_boards.set(dict_key, dict_element);
+        }
+
+        dict_element.add_user(user_name, time);
+
+        this.set_to_localstorage();
+    }
+
+    public select_leaderboard_to_show(): void {
+        var selection_element = document.getElementById(this.UI_SELECT_ID) as HTMLSelectElement;
+
+        if (selection_element === null) {
+            console.error("Could not retreive html element with id " + this.UI_SELECT_ID + ".");
+            return;
+        }
+
+        var option: string = selection_element.value;
+        console.log(option);
+
+        console.log(this.leader_boards);
+
+        // hide last one
+        if (this.last_leaderboard_shown !== null) {
+            var board = this.leader_boards.get(this.last_leaderboard_shown);
+
+            if (board === undefined) {
+                console.error("Could not retreive value from key " + this.last_leaderboard_shown + " from map.");
+                return;
+            }
+
+            board.hide();
+        }
+
+        // show next one
+        var board = this.leader_boards.get(option);
+
+        if (board === undefined) {
+            console.error("Could not retreive value from key " + option + " from map.");
+            return;
+        }
+
+        board.show();
+
+        this.last_leaderboard_shown = option;
+    }
+
+    public hide(): void {
+        var board = document.getElementById(this.LEADERBOARD_ID);
+
+        if (board === null) {
+            console.error("Could not retreive html element with id " + this.LEADERBOARD_ID + ".");
+            return;
+        }
+
+        board.hidden = true;
+    }
+
+    public show(): void {
+        var board = document.getElementById(this.LEADERBOARD_ID);
+
+        if (board === null) {
+            console.error("Could not retreive html element with id " + this.LEADERBOARD_ID + ".");
+            return;
+        }
+
+        board.hidden = false;
+    }
+}
+
+var leaderboard = new Leaderboard();
 
 //
 // - misc
@@ -260,11 +595,11 @@ function _create_tiles(width: number, height: number) {
             tile.oncontextmenu = () => {return false;};
             tile.onmousedown = function(event) {
                 if (event.button == 0) {
-                    reveal_tile(x, y);
+                    reveal_tile(x, y, false);
                 } else if (event.button == 2) {
                     var click_mode_backup: boolean = click_mode;
                     click_mode = true;
-                    reveal_tile(x, y);
+                    reveal_tile(x, y, false);
                     click_mode = click_mode_backup;
                 }
             }
@@ -486,7 +821,7 @@ function _remove_flag(): void {
 }
 
 //
-// - toggeling the visability of the game setup, game and the score board
+// - set the visability of the game setup, game and the score board
 //
 
 /**
@@ -587,6 +922,18 @@ function death_screen_show() {
 }
 
 //
+// - on death
+//
+
+function _reveal_all_tile_contents() {
+    for (let y: number = 0; y < tiles.length; y++) {
+        for (let x: number = 0; x < tiles[y].length; x++) {
+            reveal_tile(x, y, true);
+        }
+    }
+}
+
+//
 // - victory screen 
 //
 
@@ -644,6 +991,12 @@ function victory_screen_show() {
     v.hidden = false;
 }
 
+function set_score() {
+    var element = document.getElementById("user_name") as HTMLInputElement;
+    var user_name = element.value;
+    leaderboard.add_user(user_name, 0, String(tiles[0].length) + "x" + String(tiles.length), amount_mines);
+}
+
 //
 // - called from html document
 //
@@ -653,8 +1006,8 @@ function victory_screen_show() {
  * @param x The tiles x-coordinate.
  * @param y The tiles y-coordinate.
  */
-function reveal_tile(x: number, y: number): void {
-    if (game_over) {
+function reveal_tile(x: number, y: number, do_anyway: boolean): void {
+    if (game_over && !do_anyway) {
         return;
     }
 
@@ -673,17 +1026,28 @@ function reveal_tile(x: number, y: number): void {
             if (content == "M") {
                 var img = document.createElement("img") as HTMLImageElement;
                 img.src = "assets/160x160/mine.png";
-                img.className = "flag_img";
+                img.className = "img";
                 tile.appendChild(img);
                 tile.className = "tile mine";
+                
+                if (do_anyway) {
+                    return;
+                }
+
                 game_over = true;
                 death_screen_set_stuff("", String(tiles[0].length), String(tiles.length), String(amount_mines));
                 death_screen_show();
+                _reveal_all_tile_contents();
 
             // if the tile is empty
             } else if (content == "") {
                 discovered_tiles++;
                 tile.className = "tile empty";
+
+                if (do_anyway) {
+                    return;
+                }
+
                 _reveal_empty_tiles(x, y);
             
             // if the tile is a number
@@ -695,6 +1059,10 @@ function reveal_tile(x: number, y: number): void {
         // if a tle with a number is clicked and there are enough flags and no questionmarks surrounding it, the tiles
         // surrounding tiles are revealed
         } else if (tile_class.startsWith("tile number_")) {
+            if (do_anyway) {
+                return;
+            }
+
             let num = Number(tile_class.charAt(tile_class.length - 1));
             let flags: number = 0;
 
@@ -713,7 +1081,7 @@ function reveal_tile(x: number, y: number): void {
 
                 for (let i:number = 0; i < surrounding_tiles.length; i++) {
                     if (surrounding_tiles[i][0].className == "tile undiscovered") {
-                        reveal_tile(surrounding_tiles[i][1], surrounding_tiles[i][2]);
+                        reveal_tile(surrounding_tiles[i][1], surrounding_tiles[i][2], false);
                     }
                 }
                 click_mode = click_mode_backup;
@@ -722,12 +1090,15 @@ function reveal_tile(x: number, y: number): void {
         
     // set flag
     } else {
+        if (do_anyway) {
+            return;
+        }
 
         // undiscovered -> flag
         if (tile_class == "tile undiscovered") {
             var img = document.createElement("img") as HTMLImageElement;
             img.src = "assets/160x160/flag.png";
-            img.className = "flag_img";
+            img.className = "img";
             tile.appendChild(img);
             tile.className = "tile flag";
             _add_flag();
@@ -737,7 +1108,7 @@ function reveal_tile(x: number, y: number): void {
             tile.children[0].remove();
             var img = document.createElement("img") as HTMLImageElement;
             img.src = "assets/160x160/questionmark.png";
-            img.className = "flag_img";
+            img.className = "img";
             tile.appendChild(img);
             tile.className = "tile questionmark";
             _remove_flag();
@@ -749,8 +1120,12 @@ function reveal_tile(x: number, y: number): void {
         }
     }
 
+    if(do_anyway) {
+        return;
+    }
+
     console.log(discovered_tiles);
-    if (discovered_tiles == (tiles[0].length * tiles.length - amount_mines)) {
+    if ((discovered_tiles == (tiles[0].length * tiles.length - amount_mines)) && (!game_over)) {
         victory_screen_set_stuff("", String(tiles[0].length), String(tiles.length), String(amount_mines));
         victory_screen_show();
         game_over = true;        
@@ -873,4 +1248,14 @@ function toggle_click_mode(): void {
         button.textContent = text_2;
         label.textContent = "or " + text_1;
     }
+}
+
+function go_to_leaderboard(): void {
+    _set_game_setup_visability(false);
+    leaderboard.show();
+}
+
+function back_from_leaderboard(): void {
+    leaderboard.hide();
+    _set_game_setup_visability(true);
 }

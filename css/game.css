@@ -1,0 +1,14 @@
+.field {
+    overflow: scroll;
+    float: left;
+    width: 85vw;
+    height: 100vh;
+}
+
+.game_click_mode_button {
+    width: 90%;
+    border: 0px;
+    margin: 5px;
+    font-size: 5vh;
+    text-align: center;
+}
