@@ -42,7 +42,7 @@ class LeaderboardSize {
     private HTML_TABLE: HTMLTableElement;
     private UI_TABLE_CONTAINER_ID: string;
 
-    private leaders: [string, number][];
+    private leaders: [string, number, string][];
 
     public constructor(size: string, amount: number, private UI_SELECT_ID: string, private LS_CONTENT_DIVIDER: string) {
         this.SIZE = size;
@@ -111,10 +111,8 @@ class LeaderboardSize {
                 continue;
             }
 
-            this.leaders.push([data_parts[0], Number(data_parts[1])]);
+            this.leaders.push([data_parts[0], Number(data_parts[1]), _convert_time_to_string(Number(data_parts[1]))]);
         }
-
-        console.log(this.leaders);
     }
 
     private set_to_localstorage(): void {
@@ -143,7 +141,7 @@ class LeaderboardSize {
             tr.appendChild(td);
 
             td = document.createElement("td");
-            td.textContent = String(this.leaders[user][1]);
+            td.textContent = String(this.leaders[user][2]);
             tr.appendChild(td);
 
             this.HTML_TABLE.appendChild(tr);
@@ -164,21 +162,21 @@ class LeaderboardSize {
         this.create_ui();
     }
 
-    public add_user(user_name: string, time: number): void {
+    public add_user(user_name: string, time: number, display_time: string): void {
         var added_user: boolean = false;
         for (var user: number = 0; user < this.leaders.length; user++) {
             if (time < this.leaders[user][1]) {
                 // insterts after the index user
-                this.leaders.splice(user, 0, [user_name, time]);
+                this.leaders.splice(user, 0, [user_name, time, display_time]);
                 added_user = true;
                 break;
             }
         }
 
         if (this.leaders.length == 0) {
-            this.leaders.push([user_name, time]);
+            this.leaders.push([user_name, time, display_time]);
         } else if (!added_user) {
-            this.leaders.splice(this.leaders.length, 0, [user_name, time]);
+            this.leaders.splice(this.leaders.length, 0, [user_name, time, display_time]);
         }
 
         if (this.leaders.length > this.AMOUNT_USERS) {
@@ -277,7 +275,7 @@ class Leaderboard {
         localStorage.setItem(this.LS_KEY, set_to);
     }
 
-    public add_user(user_name: string, time: number, size: string, amount: number): void {
+    public add_user(user_name: string, time: number, size: string, amount: number, display_time: string): void {
         var dict_key: string = size + this.LS_CONTENT_DIVIDER + amount;
         var dict_element = this.leader_boards.get(dict_key);
 
@@ -286,7 +284,7 @@ class Leaderboard {
             this.leader_boards.set(dict_key, dict_element);
         }
 
-        dict_element.add_user(user_name, time);
+        dict_element.add_user(user_name, time, display_time);
 
         this.set_to_localstorage();
     }
@@ -352,7 +350,62 @@ class Leaderboard {
     }
 }
 
-var leaderboard = new Leaderboard();
+function _convert_time_to_string(time: number): string {
+    var ms: number = Math.floor(time);
+    var s: number = Math.floor(ms / 1000);
+    var min: number = Math.floor(s / 60);
+    var h: number = Math.floor(min / 60);
+
+    ms = ms - s * 1000;
+    s = s - min * 60;
+    min = min - h * 60;
+
+    var res = "";
+    if (h > 0) {
+        res = res + String(h) + "h ";
+        res = res + String(min) + "min ";
+        res = res+ String(s) + "s";
+    } else if (min > 0) {
+        res = res + String(min) + "min ";
+        res = res + String(s) + "s";
+    } else if (s > 0) {
+        res = res + String(s) + "s";
+    }
+
+    return res;
+}
+class TimeTracker {
+
+    private start_time: Date;
+    private end_time: Date;
+    private difference_ms: number;
+    private difference_display: string;
+
+    public constructor() {
+
+    }
+
+    public start(): void {
+        this.start_time = new Date();
+    }
+
+    public end(): void {
+        this.end_time = new Date();
+        this.difference_ms = this.end_time.valueOf() - this.start_time.valueOf();
+        this.difference_display = _convert_time_to_string(this.difference_ms);
+    }
+
+    public get_difference_ms(): number {
+        return this.difference_ms;
+    }
+
+    public get_difference_display(): string {
+        return this.difference_display;
+    }
+}
+
+const leaderboard = new Leaderboard();
+const time_tracker = new TimeTracker();
 
 //
 // - misc
@@ -655,6 +708,8 @@ function _first_click(tile: HTMLButtonElement, x: number, y: number): void {
         _set_mines(surrounding_tiles2);
         _set_numbers();
         _init_flags();
+
+        time_tracker.start();
     }
 }
 
@@ -994,7 +1049,9 @@ function victory_screen_show() {
 function set_score() {
     var element = document.getElementById("user_name") as HTMLInputElement;
     var user_name = element.value;
-    leaderboard.add_user(user_name, 0, String(tiles[0].length) + "x" + String(tiles.length), amount_mines);
+    leaderboard.add_user(user_name, time_tracker.get_difference_ms(), String(tiles[0].length) + "x" + String(tiles.length), amount_mines, time_tracker.get_difference_display());
+
+    back_button();
 }
 
 //
@@ -1035,7 +1092,8 @@ function reveal_tile(x: number, y: number, do_anyway: boolean): void {
                 }
 
                 game_over = true;
-                death_screen_set_stuff("", String(tiles[0].length), String(tiles.length), String(amount_mines));
+                time_tracker.end();
+                death_screen_set_stuff(time_tracker.get_difference_display(), String(tiles[0].length), String(tiles.length), String(amount_mines));
                 death_screen_show();
                 _reveal_all_tile_contents();
 
@@ -1126,7 +1184,8 @@ function reveal_tile(x: number, y: number, do_anyway: boolean): void {
 
     console.log(discovered_tiles);
     if ((discovered_tiles == (tiles[0].length * tiles.length - amount_mines)) && (!game_over)) {
-        victory_screen_set_stuff("", String(tiles[0].length), String(tiles.length), String(amount_mines));
+        time_tracker.end();
+        victory_screen_set_stuff(time_tracker.get_difference_display(), String(tiles[0].length), String(tiles.length), String(amount_mines));
         victory_screen_show();
         game_over = true;        
     }    

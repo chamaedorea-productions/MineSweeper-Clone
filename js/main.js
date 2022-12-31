@@ -77,9 +77,8 @@ var LeaderboardSize = /** @class */ (function () {
                 console.error("Could not decode user data from local storage value from key " + this.LS_KEY + " into enough parts (got: " + String(data_parts.length) + " expected: 2).");
                 continue;
             }
-            this.leaders.push([data_parts[0], Number(data_parts[1])]);
+            this.leaders.push([data_parts[0], Number(data_parts[1]), _convert_time_to_string(Number(data_parts[1]))]);
         }
-        console.log(this.leaders);
     };
     LeaderboardSize.prototype.set_to_localstorage = function () {
         var value = "";
@@ -100,7 +99,7 @@ var LeaderboardSize = /** @class */ (function () {
             td.textContent = this.leaders[user][0];
             tr.appendChild(td);
             td = document.createElement("td");
-            td.textContent = String(this.leaders[user][1]);
+            td.textContent = String(this.leaders[user][2]);
             tr.appendChild(td);
             this.HTML_TABLE.appendChild(tr);
         }
@@ -115,21 +114,21 @@ var LeaderboardSize = /** @class */ (function () {
         this.HTML_TABLE.remove();
         this.create_ui();
     };
-    LeaderboardSize.prototype.add_user = function (user_name, time) {
+    LeaderboardSize.prototype.add_user = function (user_name, time, display_time) {
         var added_user = false;
         for (var user = 0; user < this.leaders.length; user++) {
             if (time < this.leaders[user][1]) {
                 // insterts after the index user
-                this.leaders.splice(user, 0, [user_name, time]);
+                this.leaders.splice(user, 0, [user_name, time, display_time]);
                 added_user = true;
                 break;
             }
         }
         if (this.leaders.length == 0) {
-            this.leaders.push([user_name, time]);
+            this.leaders.push([user_name, time, display_time]);
         }
         else if (!added_user) {
-            this.leaders.splice(this.leaders.length, 0, [user_name, time]);
+            this.leaders.splice(this.leaders.length, 0, [user_name, time, display_time]);
         }
         if (this.leaders.length > this.AMOUNT_USERS) {
             this.leaders.pop();
@@ -193,14 +192,14 @@ var Leaderboard = /** @class */ (function () {
         }
         localStorage.setItem(this.LS_KEY, set_to);
     };
-    Leaderboard.prototype.add_user = function (user_name, time, size, amount) {
+    Leaderboard.prototype.add_user = function (user_name, time, size, amount, display_time) {
         var dict_key = size + this.LS_CONTENT_DIVIDER + amount;
         var dict_element = this.leader_boards.get(dict_key);
         if (dict_element === undefined) {
             dict_element = new LeaderboardSize(size, amount, this.UI_SELECT_ID, this.LS_CONTENT_DIVIDER);
             this.leader_boards.set(dict_key, dict_element);
         }
-        dict_element.add_user(user_name, time);
+        dict_element.add_user(user_name, time, display_time);
         this.set_to_localstorage();
     };
     Leaderboard.prototype.select_leaderboard_to_show = function () {
@@ -248,7 +247,50 @@ var Leaderboard = /** @class */ (function () {
     };
     return Leaderboard;
 }());
+function _convert_time_to_string(time) {
+    var ms = Math.floor(time);
+    var s = Math.floor(ms / 1000);
+    var min = Math.floor(s / 60);
+    var h = Math.floor(min / 60);
+    ms = ms - s * 1000;
+    s = s - min * 60;
+    min = min - h * 60;
+    var res = "";
+    if (h > 0) {
+        res = res + String(h) + "h ";
+        res = res + String(min) + "min ";
+        res = res + String(s) + "s";
+    }
+    else if (min > 0) {
+        res = res + String(min) + "min ";
+        res = res + String(s) + "s";
+    }
+    else if (s > 0) {
+        res = res + String(s) + "s";
+    }
+    return res;
+}
+var TimeTracker = /** @class */ (function () {
+    function TimeTracker() {
+    }
+    TimeTracker.prototype.start = function () {
+        this.start_time = new Date();
+    };
+    TimeTracker.prototype.end = function () {
+        this.end_time = new Date();
+        this.difference_ms = this.end_time.valueOf() - this.start_time.valueOf();
+        this.difference_display = _convert_time_to_string(this.difference_ms);
+    };
+    TimeTracker.prototype.get_difference_ms = function () {
+        return this.difference_ms;
+    };
+    TimeTracker.prototype.get_difference_display = function () {
+        return this.difference_display;
+    };
+    return TimeTracker;
+}());
 var leaderboard = new Leaderboard();
+var time_tracker = new TimeTracker();
 //
 // - misc
 //
@@ -517,6 +559,7 @@ function _first_click(tile, x, y) {
         _set_mines(surrounding_tiles2);
         _set_numbers();
         _init_flags();
+        time_tracker.start();
     }
 }
 /**
@@ -809,7 +852,8 @@ function victory_screen_show() {
 function set_score() {
     var element = document.getElementById("user_name");
     var user_name = element.value;
-    leaderboard.add_user(user_name, 0, String(tiles[0].length) + "x" + String(tiles.length), amount_mines);
+    leaderboard.add_user(user_name, time_tracker.get_difference_ms(), String(tiles[0].length) + "x" + String(tiles.length), amount_mines, time_tracker.get_difference_display());
+    back_button();
 }
 //
 // - called from html document
@@ -842,7 +886,8 @@ function reveal_tile(x, y, do_anyway) {
                     return;
                 }
                 game_over = true;
-                death_screen_set_stuff("", String(tiles[0].length), String(tiles.length), String(amount_mines));
+                time_tracker.end();
+                death_screen_set_stuff(time_tracker.get_difference_display(), String(tiles[0].length), String(tiles.length), String(amount_mines));
                 death_screen_show();
                 _reveal_all_tile_contents();
                 // if the tile is empty
@@ -925,7 +970,8 @@ function reveal_tile(x, y, do_anyway) {
     }
     console.log(discovered_tiles);
     if ((discovered_tiles == (tiles[0].length * tiles.length - amount_mines)) && (!game_over)) {
-        victory_screen_set_stuff("", String(tiles[0].length), String(tiles.length), String(amount_mines));
+        time_tracker.end();
+        victory_screen_set_stuff(time_tracker.get_difference_display(), String(tiles[0].length), String(tiles.length), String(amount_mines));
         victory_screen_show();
         game_over = true;
     }
