@@ -1,8 +1,8 @@
 .game_tools {
     background-color: rgb(116, 108, 108);
-    float: right;
-    width: 15vw;
-    height: 100vh;
+    position: absolute;
+    top: 0px;
+    right: 0px;
     text-align: center;
 }
 
