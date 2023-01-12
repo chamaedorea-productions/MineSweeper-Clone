@@ -24,7 +24,7 @@ let game_over: boolean = false;
 /**
  * Data structure:
  *  Size: <width>x<height>
- *  localstorage:
+ *  local storage:
  *  (No trailing "|")
  *  
  *  ------------------b64------------------ ...
@@ -113,7 +113,7 @@ class LeaderboardSize {
 
         // If no data was retreived a new entry is created.
         if (ls_data === null) {
-            console.info("Could not reteive value from localstorage key " + this.LS_KEY + " creating it now.");
+            console.info("Could not reteive value from local storage key " + this.LS_KEY + " creating it now.");
             localStorage.setItem(this.LS_KEY, "");
             return;
         }
@@ -204,24 +204,30 @@ class LeaderboardSize {
 
         this.SELECT_ELEMENT.appendChild(option);
     }
-
     
-
+    /**
+     * Saves the leaderboard to lacal storage.
+     */
     private set_to_localstorage(): void {
         let value: string = "";
 
+        // add each user to the string:
+        // -------b64------   -------b64------   ...
+        // username | score | username | score | ...
         for (let user: number = 0; user < this.leaders.length; user++) {
             value = value + btoa(this.leaders[user][0] + "|" + String(this.leaders[user][1])) + "|"
         }
 
+        // Remove the trailing "|".
         value = value.substring(0, value.length - 1);
         value = btoa(value);
 
         localStorage.setItem(this.LS_KEY, value);
     }
 
-    
-
+    /**
+     * Reloads the table for displaying the leaderboard. This is done by completely removing it and then recreating it.
+     */
     private reload_ui() {
         this.HTML_TABLE.remove();
         this.create_ui();
@@ -229,7 +235,7 @@ class LeaderboardSize {
 
     /**
      * Adds a new score to the leaderboard. If the score is to low and the leaderboard to full it won't be added. Saves
-     * the leaderboard to local storage and resets the table for displaying this leaderboard.
+     * the leaderboard to local storage and reloads the table for displaying this leaderboard.
      * @param username The username. Duh.
      * @param time The time in ms it took the user to complete the game.
      * @param display_time The time ot took the user to ccomplete the game but formatted nicely for presenting to them.
@@ -247,15 +253,13 @@ class LeaderboardSize {
             }
         }
 
-        //////////////////////////////////////////////////////////////////
-
-        // If there are no other users.
-        if (this.leaders.length == 0) {
+        // If there are no other users or
+        // the user wasn't added since they weren't better than anyone else.
+        if ((this.leaders.length == 0) || (!added_user)) {
             this.leaders.push([username, time, display_time]);
-        } else if (!added_user) {
-            this.leaders.splice(this.leaders.length, 0, [username, time, display_time]);
         }
 
+        // Remove the last user if there are to many users.
         if (this.leaders.length > this.AMOUNT_USERS) {
             this.leaders.pop();
         }
@@ -289,65 +293,101 @@ class LeaderboardSize {
 class LeaderboardHandler {
 
     private LS_KEY: string;
-    private LS_CONTENT_DIVIDER: string;
-    private UI_SELECT_ID: string;
-    private LEADERBOARD_ID: string;
 
+    /**
+     * Cantains the different leaderboard objects.  
+     * Key:  
+     * `width` x `height` | `amount_mines`
+     */
     private leader_boards: Map<string, LeaderboardSize>;
-    private last_leaderboard_shown: string|null;
+    private last_leaderboard_shown: string | null;
+
+    private TABLE_CONTAINER_ELEMENT: HTMLTableElement;
+    private SELECT_ELEMENT: HTMLSelectElement;
 
     public constructor() {
         this.LS_KEY = "LEADERBOARD";
-        this.LS_CONTENT_DIVIDER = "|";
-        this.UI_SELECT_ID = "LEADERBOARD_SIZE_MINE_SELECT";
-        this.LEADERBOARD_ID = "leaderboard";
 
-        this.leader_boards = new Map();
+        this.leader_boards = new Map<string, LeaderboardSize>();
         this.last_leaderboard_shown = null;
+
+        this.TABLE_CONTAINER_ELEMENT = document.getElementById("leaderboard_entrys") as HTMLTableElement;
+        this.SELECT_ELEMENT = document.getElementById("leaderboard_select") as HTMLSelectElement;
 
         this.get_from_localstorage();
     }
 
+    /**
+     * Loads the existing data for the leaderboards from local storage.
+     */
     private get_from_localstorage(): void {
+        // Get the local storage data.
         let ls_data = localStorage.getItem(this.LS_KEY);
 
+        // If no data was received a new entry is created.
         if (ls_data === null) {
             console.info("Could not retreive contents from local storage key: " + this.LS_KEY + " creating it now.");
             localStorage.setItem(this.LS_KEY, "");
             return;
         }
 
-        let b64_data: string[] = ls_data.split(this.LS_CONTENT_DIVIDER);
+        // Split the data into parts for each type of leaderboard.
+        let b64_data: string[] = ls_data.split("|");
 
+        // Go through each part and add load it.
         for (let data: number = 0; data < b64_data.length - 1; data++) {
+            // b64 decode the data
             let decoded_data = atob(b64_data[data]);
-            let parts = decoded_data.split(this.LS_CONTENT_DIVIDER);
+            // Get the leaderboard size and the amount of mines.
+            let parts = decoded_data.split("|");
 
+            // If there were to many or to little an amount of parts.
             if (parts.length != 2) {
-                console.error("Could not successfully split data from localstorage key " + this.LS_KEY + " (got: " + parts.length + " expected: 2).");
+                console.error("Could not successfully split data from local storage key " + this.LS_KEY + " (got: " + parts.length + " expected: 2).");
                 continue;
             }
 
+            // Split the size into width and height.
+            let size_parts = parts[0].split("x");
+
+            // If there were to many or to little an amount of parts.
+            if (size_parts.length != 2) {
+                console.error("Could not successfully split data from value from local storage key " + this.LS_KEY + " (got: " + size_parts.length + " expected: 2).");
+                continue;
+            }
+
+            let amount = parseInt(parts[1]);
+            let width = parseInt(size_parts[0]);
+            let height = parseInt(size_parts[1]);
+
+            // Create a new leaderboard.
             this.leader_boards.set(
                 decoded_data,
                 new LeaderboardSize(
-                    parts[0],
-                    Number(parts[1]),
-                    this.UI_SELECT_ID,
-                    this.LS_CONTENT_DIVIDER
+                    amount,
+                    width,
+                    height,
+                    this.TABLE_CONTAINER_ELEMENT,
+                    this.SELECT_ELEMENT
                 )
             );
         }
     }
 
+    /**
+     * Saves the existing data to local storage.
+     */
     private set_to_localstorage(): void {
         let set_to = "";
+        // Get the keys for the leaderboards.
         let keys = this.leader_boards.keys();
 
+        // Save each key to localstorage.
         while (true) {
             let stuff = keys.next() as IteratorResult<string>;
             let done = stuff.done;
 
+            // Finished going through all the keys.
             if ((done) || (done === undefined)) {
                 break;
             }
